@@ -68,7 +68,7 @@ jobs:
           share: "false"
           mentions: "/vfp"
           use_github_token: "true"
-          prompt: "Generate a Value Framing Packet (VFP) for the delivery request described in this issue. Follow the VFP agent instructions."
+          prompt: "Your first action must be to call notion_API-post-search (query: 'VFPs') to locate the parent Notion page — do this before generating any VFP content. Once you have the parent page ID from the search result, generate the full 17-section VFP for the delivery request in this issue, publish it to Notion, and post the summary comment."
 
   # /oc or /opencode: general-purpose opencode agent
   opencode:
