@@ -68,7 +68,23 @@ jobs:
           share: "false"
           mentions: "/vfp"
           use_github_token: "true"
-          prompt: "Your first action must be to call notion_API-post-search (query: 'VFPs') to locate the parent Notion page — do this before generating any VFP content. Once you have the parent page ID from the search result, generate the full 17-section VFP for the delivery request in this issue, publish it to Notion, and post the summary comment."
+          prompt: |
+            Your first action must be to call notion_API-post-search (query: 'VFPs') to locate the parent Notion page — do this before generating any VFP content.
+
+            Then generate a Value Framing Packet (VFP) for the delivery request in this issue. The VFP must use exactly these 17 sections in this order: §4.1 Request Summary, §4.2 Intended Outcome, §4.3 Expected User Behaviour, §4.4 Expected Value, §4.5 Known Facts, §4.6 Assumptions, §4.7 Ambiguities & Undefined Areas, §4.8 Scope Boundaries, §4.9 Risk & Uncertainty Signals, §4.10 Proposed Agreement Boundary, §4.11 Suggested Capability Slices, §4.12 Validation Signals, §4.13 Evidence Expectations, §4.14 Prototype or Mock Validation, §4.15 Delivery Handoff Notes, §4.16 Questions for Stakeholders, §4.17 Recommended Next Step. Do NOT generate a product spec, user stories, or PRD-style sections.
+
+            Then publish to Notion (following the block format in your instructions: metadata header, plain paragraph section titles, bulleted_list_item for list sections).
+
+            Then post a GitHub comment on this issue using exactly this structure:
+            ## VFP Published
+            [2-3 sentence behavioural reframe from §4.1]
+            **Main risk signals**
+            - **[type]**: [one sentence]
+            - **[type]**: [one sentence]
+            **Recommended next step**
+            [1-2 sentences from §4.17]
+            ---
+            📄 Full Value Framing Packet: [notion url]
 
   # /oc or /opencode: general-purpose opencode agent
   opencode:
