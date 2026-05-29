@@ -73,14 +73,20 @@ jobs:
 
             Then generate a Value Framing Packet (VFP) for the delivery request in this issue. The VFP must use exactly these 17 sections in this order: §4.1 Request Summary, §4.2 Intended Outcome, §4.3 Expected User Behaviour, §4.4 Expected Value, §4.5 Known Facts, §4.6 Assumptions, §4.7 Ambiguities & Undefined Areas, §4.8 Scope Boundaries, §4.9 Risk & Uncertainty Signals, §4.10 Proposed Agreement Boundary, §4.11 Suggested Capability Slices, §4.12 Validation Signals, §4.13 Evidence Expectations, §4.14 Prototype or Mock Validation, §4.15 Delivery Handoff Notes, §4.16 Questions for Stakeholders, §4.17 Recommended Next Step. Do NOT generate a product spec, user stories, or PRD-style sections.
 
-            Then publish to Notion (following the block format in your instructions: metadata header, plain paragraph section titles, bulleted_list_item for list sections).
+            Then publish to Notion. The block array must start with these metadata paragraphs before the VFP sections:
+            - "Status: Draft"
+            - "Date: <today YYYY-MM-DD>"
+            - "Source: GitHub Issue #<n> — <owner/repo>" (linked to the issue URL)
+            - empty paragraph
+            Then append all 17 VFP sections (plain paragraph or heading for section titles; bulleted_list_item for list content).
 
-            Then post a GitHub comment on this issue using exactly this structure:
+            Then post a GitHub comment using exactly this structure (risk signal types must use taxonomy terms: Semantic Underestimation / Behavioural Ambiguity / Validation Uncertainty / Scope Expansion Risk / Operational Uncertainty / Exploratory Behaviour):
             ## VFP Published
             [2-3 sentence behavioural reframe from §4.1]
             **Main risk signals**
-            - **[type]**: [one sentence]
-            - **[type]**: [one sentence]
+            - **[taxonomy term]**: [one sentence]
+            - **[taxonomy term]**: [one sentence]
+            - **[taxonomy term]**: [one sentence]
             **Recommended next step**
             [1-2 sentences from §4.17]
             ---
