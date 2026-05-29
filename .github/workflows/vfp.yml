@@ -46,6 +46,7 @@ jobs:
       startsWith(github.event.comment.body, '/vfp') &&
       !startsWith(github.event.comment.body, '/vfp-check')
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: write
       pull-requests: write
@@ -76,9 +77,9 @@ jobs:
             Then publish to Notion. The block array must start with these metadata paragraphs before the VFP sections:
             - "Status: Draft"
             - "Date: <today YYYY-MM-DD>"
-            - "Source: GitHub Issue #<n> — <owner/repo>" (linked to the issue URL)
+            - "Source: GitHub Issue #<n> — <owner/repo>"
             - empty paragraph
-            Then append all 17 VFP sections (plain paragraph or heading for section titles; bulleted_list_item for list content).
+            Then append all 17 VFP sections.
 
             Then post a GitHub comment using exactly this structure (risk signal types must use taxonomy terms: Semantic Underestimation / Behavioural Ambiguity / Validation Uncertainty / Scope Expansion Risk / Operational Uncertainty / Exploratory Behaviour):
             ## VFP Published
