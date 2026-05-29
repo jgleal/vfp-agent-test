@@ -64,7 +64,7 @@ jobs:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          model: google/gemini-2.5-flash
+          model: google/gemini-2.0-flash
           agent: vfp
           share: "false"
           mentions: "/vfp"
@@ -118,6 +118,6 @@ jobs:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          model: google/gemini-2.5-flash
+          model: google/gemini-2.0-flash
           share: "false"
           use_github_token: "true"
