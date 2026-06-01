@@ -70,11 +70,11 @@ jobs:
           mentions: "/vfp"
           use_github_token: "true"
           prompt: |
-            Your first action must be to call notion_API-post-search (query: 'VFPs') to locate the parent Notion page — do this before generating any VFP content.
+            Your first action must be to locate the parent Notion page where VFPs are stored. Use notion_API-post-search (query: 'VFPs') to find it — do this before generating any VFP content.
 
             Then generate a Value Framing Packet (VFP) for the delivery request in this issue. The VFP must use exactly these 17 sections in this order: §4.1 Request Summary, §4.2 Intended Outcome, §4.3 Expected User Behaviour, §4.4 Expected Value, §4.5 Known Facts, §4.6 Assumptions, §4.7 Ambiguities & Undefined Areas, §4.8 Scope Boundaries, §4.9 Risk & Uncertainty Signals, §4.10 Proposed Agreement Boundary, §4.11 Suggested Capability Slices, §4.12 Validation Signals, §4.13 Evidence Expectations, §4.14 Prototype or Mock Validation, §4.15 Delivery Handoff Notes, §4.16 Questions for Stakeholders, §4.17 Recommended Next Step. Do NOT generate a product spec, user stories, or PRD-style sections.
 
-            Then publish to Notion (following the block format in your instructions: metadata header, plain paragraph section titles, bulleted_list_item for list sections).
+            Then publish to Notion. NOTION_TOKEN is available in your environment — use Python3 urllib to call the Notion REST API directly: POST /v1/pages to create the page, then PATCH /v1/pages/{id}/markdown with Notion-Version: 2026-03-11 and {"replace_content": "..."} to write the VFP content with ### headings for each section. If Python3 or NOTION_TOKEN is unavailable, fall back to notion_API-patch-block-children with paragraph and bulleted_list_item blocks.
 
             Then post a GitHub comment on this issue using exactly this structure:
             ## VFP Published
