@@ -105,7 +105,24 @@ If no relevant test or doc files exist, proceed from the input alone.
 
 When given a raw input, follow this process **in this exact order**:
 
-1. **Call `notion_API-post-search` now** — your very first action, before writing any VFP content, is to call `notion_API-post-search` with `query: "VFPs"` and `filter: {"property": "object", "value": "page"}`. Record the first result's `id` as `parent_page_id`. Do not generate any VFP content until you have received this tool result.
+1. **Verify Notion access and find parent page** — Before generating any VFP content, run this Python3 snippet via bash. It confirms `NOTION_TOKEN` is valid and locates the page where VFPs are stored:
+
+   ```python
+   import urllib.request, json, os, sys
+   TOKEN = os.environ.get('NOTION_TOKEN', '')
+   if not TOKEN: sys.exit('ERROR: NOTION_TOKEN is not set')
+   headers = {'Authorization': f'Bearer {TOKEN}', 'Content-Type': 'application/json', 'Notion-Version': '2022-06-28'}
+   for q in ['VFPs', 'VFP', 'Value Framing']:
+       req = urllib.request.Request('https://api.notion.com/v1/search',
+           json.dumps({'query': q, 'filter': {'property': 'object', 'value': 'page'}}).encode(),
+           headers, method='POST')
+       results = json.loads(urllib.request.urlopen(req).read()).get('results', [])
+       if results:
+           print(results[0]['id']); sys.exit(0)
+   sys.exit('ERROR: no VFPs/VFP/Value Framing page found — check NOTION_TOKEN or share the page with your integration')
+   ```
+
+   Record the printed ID as `PARENT_PAGE_ID`. If the script exits with an error, do not proceed — report the error to the user.
 2. **Track the source** — if the input came from a GitHub issue, note the repo (`owner/repo`) and issue number. You will need these to post the summary comment.
 3. **Read and interpret** — do not simply paraphrase. Interpret the behavioural intent behind the request.
 4. **Detect signals** — identify semantic underestimation, behavioural ambiguity, scope expansion risk, oversized capability framing, or validation uncertainty before you start writing.
@@ -128,7 +145,7 @@ When given a raw input, follow this process **in this exact order**:
    - §4.16 Questions for Stakeholders
    - §4.17 Recommended Next Step
 6. **Be concise but complete** — avoid consultant-style verbosity. Every sentence should serve alignment or visibility.
-7. **Publish to Notion, then post the summary comment** — you already have `parent_page_id` from step 1. Call `notion_API-post-page` immediately after generating. Follow the PUBLISHING section. Do not ask for permission. Do not output the VFP as standalone text — publish it.
+7. **Publish to Notion, then post the summary comment** — you already have `parent_page_id` from step 1. Publish immediately after generating. Follow the PUBLISHING section. Do not ask for permission. Do not output the VFP as standalone text — publish it.
 
 ---
 
@@ -414,45 +431,80 @@ Every generated packet is in **Draft** status by default. Status options:
 
 # PUBLISHING YOUR VFP
 
-Use Notion MCP tools directly. No Python, no bash scripts.
+You already have `PARENT_PAGE_ID` from step 1. Run the following Python3 script via bash. Fill in `TITLE` and `MARKDOWN` — do not truncate the content.
 
-You already have `parent_page_id` from step 1 of HOW TO GENERATE A VFP. If for any reason you do not have it yet, call `notion_API-post-search` with `query: "VFPs"` and `filter: {"property": "object", "value": "page"}` and record the first result's `id`.
+```python
+import urllib.request, json, os, sys
 
-**Step 1 — Create the page**
+TOKEN = os.environ.get('NOTION_TOKEN', '')
+if not TOKEN:
+    sys.exit('ERROR: NOTION_TOKEN is not set')
 
-Call `notion_API-post-page` with:
-- `parent`: `{"page_id": "<parent_page_id>"}`
-- `properties`: title set to `"VFP — <brief description of the request>"`
+def notion(method, path, body=None, ver='2022-06-28'):
+    h = {
+        'Authorization': f'Bearer {TOKEN}',
+        'Content-Type': 'application/json',
+        'Notion-Version': ver,
+    }
+    req = urllib.request.Request(
+        f'https://api.notion.com/v1/{path}',
+        data=json.dumps(body).encode() if body else None,
+        headers=h, method=method,
+    )
+    return json.loads(urllib.request.urlopen(req).read())
 
-Note the returned `id` (`page_id`) and `url` (`page_url`).
+PARENT_PAGE_ID = '<id from step 1>'
+TITLE = 'VFP — <brief description of the request>'
+MARKDOWN = """Status: Draft
+Date: <YYYY-MM-DD>
+Source: [GitHub Issue #<n> — <owner/repo>](https://github.com/<owner/repo>/issues/<n>)
 
-**Step 2 — Add the VFP content**
+### §4.1 Request Summary
 
-Call `notion_API-patch-block-children`. The block array must start with these three metadata paragraph blocks, then an empty paragraph, then the VFP sections:
+<content>
 
+### §4.2 Intended Outcome
+
+<content>
+
+### §4.3 Expected User Behaviour
+
+- <item>
+
+...all 17 sections in order..."""
+
+# Create the page
+page = notion('POST', 'pages', {
+    'parent': {'page_id': PARENT_PAGE_ID},
+    'properties': {'title': {'title': [{'text': {'content': TITLE}}]}},
+})
+page_id = page['id']
+page_url = page['url']
+
+# Write content — ### produces real heading_3 blocks
+notion('PATCH', f'pages/{page_id}/markdown',
+    {'replace_content': MARKDOWN},
+    ver='2026-03-11',
+)
+
+print(page_url)
 ```
-{ "type": "paragraph", "paragraph": { "rich_text": [{ "type": "text", "text": { "content": "Status: Draft" } }] } },
-{ "type": "paragraph", "paragraph": { "rich_text": [{ "type": "text", "text": { "content": "Date: <YYYY-MM-DD today>" } }] } },
-{ "type": "paragraph", "paragraph": { "rich_text": [
-    { "type": "text", "text": { "content": "Source: " } },
-    { "type": "text", "text": { "content": "GitHub Issue #<n> — <owner/repo>", "link": { "url": "https://github.com/<owner/repo>/issues/<n>" } } }
-] } },
-{ "type": "paragraph", "paragraph": { "rich_text": [] } }
-```
 
-If not triggered from a GitHub issue, omit the Source line.
+**Markdown format rules** (see `docs/notion-publish.md` for full reference):
+- Metadata block at top: `Status:`, `Date:`, `Source:` as plain lines
+- Each section: `### §4.x Title` on its own line, blank line, then content
+- Prose sections (§4.1, §4.2, §4.4, §4.10, §4.14, §4.15, §4.17): plain paragraphs
+- List sections (§4.3, §4.5–§4.9, §4.11–§4.13, §4.16): `- item` per line
+- Blank line between every section
+- Omit the Source line if not triggered from a GitHub issue
 
-After the metadata, append the 17 VFP sections using these rules:
+Record the printed URL as `page_url`.
 
-- **Section title**: plain `paragraph` block with text `"4.1 Request Summary"`, `"4.2 Intended Outcome"`, etc. (use `§4.x` numbering, not `1.`, `2.`)
-- **Prose content** (§4.1, §4.2, §4.4, §4.10, §4.14, §4.15, §4.17): one or more `paragraph` blocks
-- **List content** (§4.3, §4.5, §4.6, §4.7, §4.8, §4.9, §4.11, §4.12, §4.13, §4.16): one `bulleted_list_item` block per item — do NOT dump multi-line text into a single paragraph
-- **Empty paragraph** between sections: `{ "type": "paragraph", "paragraph": { "rich_text": [] } }`
-- **Send ALL blocks in a single `notion_API-patch-block-children` call.** A complete 17-section VFP with metadata is well under the 100-block limit. Never split into multiple calls — one call, all blocks.
+**If the script fails**: post the full VFP text as a GitHub comment and state it is in Draft state pending Notion publish.
 
-**Step 3 — Post the GitHub comment**
+---
 
-Use this exact structure. Do not paraphrase it or turn it into prose:
+**Post the GitHub comment** using this exact structure:
 
 ```bash
 gh issue comment <number> --repo <owner/repo> --body "## VFP Published
@@ -472,9 +524,7 @@ gh issue comment <number> --repo <owner/repo> --body "## VFP Published
 📄 Full Value Framing Packet: <page_url>"
 ```
 
-List all significant risk signals from §4.9 — typically 3–5. Do not summarise them into one. Each bullet must name the classification and give one concrete sentence.
-
-**If Notion MCP tools fail**: post the full VFP text as a GitHub comment and state it is in Draft state pending Notion publish.
+List all significant risk signals from §4.9 — typically 3–5. Each bullet must name the classification and give one concrete sentence.
 
 ---
 
